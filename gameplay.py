@@ -52,24 +52,11 @@ def setupGame(game, screen):
         opponents.append(Enemy(game, num+1, grid))  
     goal = Food(game)
     pen = functions.create_scoreboard(game)
-    # Keyboard bindings
-    
-    screen.listen()
-    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 0), "0")
-    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 1), "1")
-    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 2), "2")
-    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 3), "3")
-    screen.onkeypress(None, "g")
-    screen.onkeypress(player.go_up, "w")
-    screen.onkeypress(player.go_up, "8")
-    screen.onkeypress(player.go_down, "s")
-    screen.onkeypress(player.go_down, "5")
-    screen.onkeypress(player.go_left, "a")
-    screen.onkeypress(player.go_left, "4")
-    screen.onkeypress(player.go_right, "d")
-    screen.onkeypress(player.go_right, "6")
-    # Where the turns actually take place
-    while game.game_over == False:
+    # Function to advance the game by one step
+    def take_turn():
+        nonlocal grid
+        if game.game_over:
+            return
         # create copy of grid      
         gridCopy = deepcopy(grid)
         player.step(game, gridCopy, pen)
@@ -96,6 +83,43 @@ def setupGame(game, screen):
             if enemy.isCollided() and not enemy.isDead():
                 enemy.killSnake(game, grid, pen)
         screen.update()
-        time.sleep(game.game_delay)
-    restartGame(game, screen)
-    
+        # If the player died, trigger restart setup
+        if game.game_over:
+            restartGame(game, screen)
+
+    # Keyboard bindings
+    screen.listen()
+    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 0), "0")
+    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 1), "1")
+    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 2), "2")
+    screen.onkeypress(lambda: functions.set_enemy_int(game, pen, 3), "3")
+    screen.onkeypress(None, "g")
+
+    # Movement keys: change direction and then take one step
+    def move_up():
+        player.go_up()
+        take_turn()
+
+    def move_down():
+        player.go_down()
+        take_turn()
+
+    def move_left():
+        player.go_left()
+        take_turn()
+
+    def move_right():
+        player.go_right()
+        take_turn()
+
+    screen.onkeypress(move_up, "w")
+    screen.onkeypress(move_up, "8")
+    screen.onkeypress(move_down, "s")
+    screen.onkeypress(move_down, "5")
+    screen.onkeypress(move_left, "a")
+    screen.onkeypress(move_left, "4")
+    screen.onkeypress(move_right, "d")
+    screen.onkeypress(move_right, "6")
+
+    # Draw initial state (snakes and food) before any movement
+    screen.update()
